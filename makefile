@@ -10,7 +10,7 @@ CC = gcc
 CFLAGS = -std=c17 -pedantic -O2 -Wall
 
 # user variables
-program_name 		:= newlangc
+program_name 		:= lsharpc
 make_directory		:= mkdir -p
 remove_file			:= rm -f
 remove_directory	:= $(remove_file) -d
