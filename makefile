@@ -1,9 +1,13 @@
 # let make know what shell to use
+SHELL = bash
+# if target os is windows (i.e. %OS% is defined), use git bash
+ifdef OS
 SHELL = C:/Program Files/Git/bin/bash.exe
+endif
 # let make know which C compiler to use
 CC = gcc
 # let make know to use "O2" optimization and "W(arning)all" to surface compiler warnings
-CFLAGS = -O2 -Wall
+CFLAGS = -std=c17 -pedantic -O2 -Wall
 
 # user variables
 program_name 		:= newlangc
@@ -25,7 +29,7 @@ all: $(program)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# run the compiler to generate the program and move all .o files to the build directory
+# generate the program and move all .o files to the build directory
 $(program): make_paths $(compiled_objects)
 	$(CC) $(compiled_objects) $(CFLAGS) -o $@
 	mv $(shell find . -name "*.o") "$(build_directory)"
@@ -38,13 +42,9 @@ make_paths:
 # removes directories created as the result of the build
 clean:
 	$(remove_file) $(build_directory)/*
-	$(remove_file) "$(program)"
+	$(remove_file) $(publish_directory)/*
 	$(remove_directory) "$(build_directory)"
 	$(remove_directory) "$(publish_directory)"
 
 # runs clean and then makes a new program
 rebuild: clean all
-
-# run will run the program
-run: $(program)
-	$<
