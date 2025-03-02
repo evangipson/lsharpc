@@ -18,14 +18,14 @@ header_files 		:= $(shell find . -name "*.h")
 source_files 		:= $(shell find . -name "*.c")
 compiled_objects 	:= $(patsubst %.c,%.o,$(source_files))
 
-# build the entire program and it's dependencies, "all" must be the first target of Make
+# "all" must be the first target of Make
 all: $(program)
 
-# object files are built using their corresponding c source files
-%.o: %.c $(header_files)
+# object files are built using their .c source and .h header files
+%.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# run the compiler and then move all .o files to the build directory
+# run the compiler to generate the program and move all .o files to the build directory
 $(program): make_paths $(compiled_objects)
 	$(CC) $(compiled_objects) $(CFLAGS) -o $@
 	mv $(shell find . -name "*.o") "$(build_directory)"
