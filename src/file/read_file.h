@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #endif
 
-/// @brief Gets all binary content from a file and allocates it to `file_contents`.
-/// @param file_name The path to an L# file.
-/// @param file_contents A pointer to a string which will be filled with file contents.
-void allocate_file_to_buffer(const char* file_name, char** file_contents);
+/// @brief Gets all binary content from the file at `file_path`.
+/// @param file_path The path to an L# file.
+/// @return The content of the file.
+char* read_file(const char* file_path);

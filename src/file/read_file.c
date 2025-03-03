@@ -11,19 +11,21 @@ static size_t get_file_length(FILE* file_pointer)
     return (size_t)file_size;
 }
 
-void allocate_file_to_buffer(const char* file_name, char** file_content_pointer)
+char* read_file(const char* file_path)
 {
-    FILE* file_pointer = fopen(file_name, "rb");
+    FILE* file_pointer = fopen(file_path, "rb");
     assert(file_pointer != NULL && "[file]: allocate_file_to_buffer was not able to open file.");
 
     size_t file_length = get_file_length(file_pointer);
     /* allocate enough memory in the buffer and the null terminator */
-    *file_content_pointer = malloc(file_length + 1);
-    assert(*file_content_pointer != NULL && "[file]: allocate_file_to_buffer was not able to allocate the memory to read file.");
+    char* file_contents = malloc(file_length + 1);
+    assert(file_contents != NULL && "[file]: allocate_file_to_buffer was not able to allocate the memory to read file.");
 
-    size_t bytes_read = fread(*file_content_pointer, 1, file_length, file_pointer);
+    size_t bytes_read = fread(file_contents, 1, file_length, file_pointer);
     assert(bytes_read == file_length && "[file]: allocate_file_to_buffer was not able to read file.");
 
-    (*file_content_pointer)[bytes_read] = '\0';
+    file_contents[bytes_read] = '\0';
     fclose(file_pointer);
+
+    return file_contents;
 }
