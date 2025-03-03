@@ -8,7 +8,7 @@ int main(int argc, const char* argv[])
     char* file_content = read_file(argv[1]);
     assert(file_content != NULL && "Unable to read L# file.");
 
-    char** lexemes = get_lexemes(file_content);
+    LEXEME* lexemes = get_lexemes(file_content);
     assert(lexemes != NULL && "Unable to parse L# file.");
 
     return 1;

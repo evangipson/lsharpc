@@ -22,17 +22,17 @@ static size_t get_lines(char* file_content, char*** file_lines)
     return line_count;
 }
 
-char** get_lexemes(char* file_content)
+LEXEME* get_lexemes(char* file_content)
 {
     char** file_lines = NULL;
     size_t line_count = get_lines(file_content, &file_lines);
     log_debug("[parser]: get_lexemes got %d lines from file_content", line_count);
 
-    /* TODO: parse file_lines and get lexemes out of them */
-    char** lexemes = (char **)malloc(line_count * (sizeof(char *)));
+    LEXEME* lexemes = (LEXEME *)malloc(line_count * (sizeof(LEXEME)));
     for(size_t i = 0; i < line_count; i++)
     {
-        lexemes[i] = file_lines[i];
+        /* TODO: parse file_lines and get lexemes out of them */
+        lexemes[i] = create_lexeme(NULL, NULL, i);
     }
     free(file_lines);
 
