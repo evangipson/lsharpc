@@ -30,23 +30,41 @@ static const LOG_CONTEXT log_contexts[] =
     { "warning", LOG_SEVERITY_WARNING, YELLOW_ESCAPE_CODE },
 };
 
-static void log_message(LOG_CONTEXT context, const char* message, va_list args)
+static void log_message(LOG_CONTEXT context, size_t buffer_size,  const char* message, va_list args)
 {
-    assert(message != NULL && "[logger]: validate_message provided a null message.");
-    assert(strlen(message) > 0 && "[logger]: validate_message provided an empty message.");
+    assert(message != NULL && "[logger]: log_message provided a null message.");
+    assert(strlen(message) > 0 && "[logger]: log_message provided an empty message.");
 
-    char formatted_message[256];
-    vsnprintf(formatted_message, sizeof(formatted_message), message, args);
+    char* formatted_message = malloc(buffer_size + 1);
+    assert(formatted_message != NULL && "[logger]: log_message unable to allocate buffer for message.");
 
+    vsnprintf(formatted_message, buffer_size + 1, message, args);
     printf("%s[%s]" RESET_ESCAPE_CODE ":\n", context.color_code, context.name);
     printf("   %s\n", formatted_message);
+
+    free(formatted_message);
+}
+
+static size_t get_buffer_size(const char* message, va_list args)
+{
+    va_list args_copy;
+    va_copy(args_copy, args);
+
+    size_t buffer_size = vsnprintf(NULL, 0, message, args_copy);
+    assert(buffer_size > 0 && "[logger]: get_buffer_size not able to determine buffer of message.");
+
+    va_end(args_copy);
+    return buffer_size;
 }
 
 void log_debug(const char* message, ...)
 {
     va_list args;
     va_start(args, message);
-    log_message(log_contexts[0], message, args);
+
+    size_t buffer_size = get_buffer_size(message, args);
+    log_message(log_contexts[0], buffer_size, message, args);
+
     va_end(args);
 }
 
@@ -54,7 +72,10 @@ void log_error(const char* message, ...)
 {
     va_list args;
     va_start(args, message);
-    log_message(log_contexts[1], message, args);
+
+    size_t buffer_size = get_buffer_size(message, args);
+    log_message(log_contexts[1], buffer_size, message, args);
+
     va_end(args);
 }
 
@@ -62,7 +83,10 @@ void log_info(const char* message, ...)
 {
     va_list args;
     va_start(args, message);
-    log_message(log_contexts[2], message, args);
+
+    size_t buffer_size = get_buffer_size(message, args);
+    log_message(log_contexts[2], buffer_size, message, args);
+
     va_end(args);
 }
 
@@ -70,6 +94,9 @@ void log_warning(const char* message, ...)
 {
     va_list args;
     va_start(args, message);
-    log_message(log_contexts[3], message, args);
+
+    size_t buffer_size = get_buffer_size(message, args);
+    log_message(log_contexts[3], buffer_size, message, args);
+
     va_end(args);
 }

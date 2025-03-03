@@ -1,6 +1,8 @@
 #ifndef MAIN
 #include <assert.h>
-#include "file/get_file_content.h"
+#include <string.h>
+#include "log/logger.h"
+#include "file/read_file.h"
 #endif
 
 int main(int argc, const char* argv[]);
