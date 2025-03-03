@@ -14,9 +14,14 @@ program_name 		:= lsharpc
 make_directory		:= mkdir -p
 remove_file			:= rm -f
 remove_directory	:= $(remove_file) -d
+open_file			:= open
+ifdef OS
+open_file			:= start
+endif
 source_directory 	:= src
 build_directory 	:= build
 publish_directory 	:= bin
+docs_directory		:= docs
 program				:= $(publish_directory)/$(program_name).exe
 header_files 		:= $(shell find . -name "*.h")
 source_files 		:= $(shell find . -name "*.c")
@@ -38,13 +43,25 @@ $(program): make_paths $(compiled_objects)
 make_paths:
 	$(make_directory) "$(build_directory)"
 	$(make_directory) "$(publish_directory)"
+	$(make_directory) "$(docs_directory)"
+
+# creates the documentation for the program
+doc: $(program) $(compiled_objects) $(docs_directory)
+	@doxygen
+	@$(open_file) "$(docs_directory)/html/index.html"
 
 # removes directories created as the result of the build
 clean:
 	$(remove_file) $(build_directory)/*
 	$(remove_file) $(publish_directory)/*
+	$(remove_file) $(docs_directory)/html/search/*
+	$(remove_directory) "$(docs_directory)/html/search"
+	$(remove_file) $(docs_directory)/html/*
+	$(remove_directory) "$(docs_directory)/html"
+	$(remove_file) $(docs_directory)/*
 	$(remove_directory) "$(build_directory)"
 	$(remove_directory) "$(publish_directory)"
+	$(remove_directory) "$(docs_directory)"
 
 # runs clean and then makes a new program
 rebuild: clean all

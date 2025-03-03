@@ -44,11 +44,13 @@ It will produce output that looks like this:
 ![A screenshot of console output of a simple L# program.](assets/simple-file-console-output.png)
 
 ## Getting Started
-1. Download the repo
+1. Clone or fork the repo
 1. Navigate to project root
-1. Use `make` to compile or clean the project:
-    - `make` to compile the program
-    - `make clean` to remove all build artifacts and the program
+1. Use the [makefile](makefile) to compile or clean the project
+    - `make` compiles the program
+    - `make clean` removes all build artifacts, docs, and the compiled program
+    - `make doc` generates and launches the documentation
+1. Run `bin/lsharpc examples/simple.ls` to compile the simple L# source code
 
 ## Architecture
 The compiler will read the L# file, break it up into understandable lexemes, parse those lexemes into statements, then invoke those statements.

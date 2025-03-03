@@ -1,3 +1,8 @@
-*.o
+# the output directory
 bin/
+
+# the build directory
 build/
+
+# the doxygen output directory
+docs/
