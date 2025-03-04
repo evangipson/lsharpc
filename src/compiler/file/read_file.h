@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../extensions/memory_extensions.h"
 
 /// @brief Gets all binary content from the file at `file_path`.
 /// @param file_path The path to an L# file.

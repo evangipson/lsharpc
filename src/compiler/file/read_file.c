@@ -18,7 +18,7 @@ char* read_file(const char* file_path)
 
     size_t file_length = get_file_length(file_pointer);
     /* allocate enough memory in the buffer and the null terminator */
-    char* file_contents = malloc(file_length + 1);
+    char* file_contents = (char*)safe_malloc(file_length + 1);
     assert(file_contents != NULL && "[file]: allocate_file_to_buffer was not able to allocate the memory to read file.");
 
     size_t bytes_read = fread(file_contents, 1, file_length, file_pointer);

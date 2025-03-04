@@ -9,8 +9,8 @@ char* duplicate_string(const char* source)
 
     size_t length = strlen(source);
 
-    /* +1 to malloc size for null terminator */
-    char* destination = (char*)malloc((length + 1) * sizeof(char));
+    /* +1 to allocated memory size for null terminator */
+    char* destination = (char*)safe_malloc((length + 1) * sizeof(char));
     if (destination == NULL)
     {
         return NULL;

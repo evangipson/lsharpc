@@ -35,7 +35,7 @@ static void log_message(LOG_CONTEXT context, size_t buffer_size,  const char* me
     assert(message != NULL && "[logger]: log_message provided a null message.");
     assert(strlen(message) > 0 && "[logger]: log_message provided an empty message.");
 
-    char* formatted_message = malloc(buffer_size + 1);
+    char* formatted_message = (char*)safe_malloc(buffer_size + 1);
     assert(formatted_message != NULL && "[logger]: log_message unable to allocate buffer for message.");
 
     vsnprintf(formatted_message, buffer_size + 1, message, args);

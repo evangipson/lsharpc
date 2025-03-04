@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../debug/logger.h"
+#include "../extensions/memory_extensions.h"
 #include "../types/lexeme.h"
 
 /// @brief Gets a collection of lexemes from `file_content`.
