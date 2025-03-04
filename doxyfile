@@ -31,7 +31,7 @@ SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 
 # Build settings
-EXTRACT_ALL            = NO
+EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = NO
 EXTRACT_LOCAL_CLASSES  = NO
