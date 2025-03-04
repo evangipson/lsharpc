@@ -26,10 +26,14 @@ bool run_log_test(void(*log_function)(const char*,...), const char* message, ...
 	int state = setjmp(test_state);
 	if (state == 0)
 	{
+		puts("state was good");
+
 		va_list args;
 		va_start(args, message);
+		puts("captured args");
 
 		log_function(message, args);
+		puts("ran log function");
 		
 		va_end(args);
 		return true;
@@ -83,7 +87,7 @@ int main()
 {
     setlocale(LC_ALL, "");
 	wprintf(L"%lc %lc %lc\tlogger tests running\n", (wchar_t)187, (wchar_t)187, (wchar_t)187);
-	//logdebug_shouldthrow_withnullmessage();
+	logdebug_shouldthrow_withnullmessage();
 	logdebug_shouldsucceed_withvalidmessage();
 	logdebug_shouldsucceed_withvariadricmessage();
 	wprintf(L"%lc %lc %lc\tlog debug tests passed\n", (wchar_t)164, (wchar_t)164, (wchar_t)164);

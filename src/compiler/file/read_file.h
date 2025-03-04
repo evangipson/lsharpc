@@ -1,6 +1,5 @@
 #ifndef READ_FILE
 #define READ_FILE
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

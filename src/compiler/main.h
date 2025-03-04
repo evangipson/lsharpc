@@ -1,6 +1,5 @@
 #ifndef LSHARPC
 #define LSHARPC
-
 #include <assert.h>
 #include <string.h>
 #include "debug/logger.h"

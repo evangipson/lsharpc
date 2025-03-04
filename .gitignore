@@ -1,3 +1,6 @@
+# vscode generated folder
+.vscode/
+
 # the output directory
 bin/
 
