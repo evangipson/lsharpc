@@ -48,8 +48,9 @@ It will produce output that looks like this:
 1. Navigate to project root
 1. Use the [makefile](makefile) to compile or clean the project
     - `make` compiles the program
+    - `make tests` compiles the unit tests for the program
     - `make clean` removes all build artifacts, docs, and the compiled program
-    - `make doc` generates and launches the documentation
+    - `make docs` generates and launches the documentation
 1. Run `bin/lsharpc examples/simple.ls` to compile the simple L# source code
 
 ## Architecture
