@@ -1,6 +1,4 @@
 # Introduction
-This specification is describes a language called L#, which was developed by Evan Gipson. The first widely distributed implementation of L# is yet to be released.
-
 As the definition of L# evolved, the goals used in its design were as follows:
 
 - L# is intended to be easy-to-write, easy-to-read, immutable by default, general-purpose, extensible, platform-agnostic programming language
@@ -14,8 +12,8 @@ This specification describes features of L#, which are as follows:
 - [Grammar](grammar): how lexical structure is understood in L#
 - [Keywords](keywords): what words are reserved in L#
 - [Types](types): what data models L# understands
-- [Expressions](expressions): what L# will evaluate
 - [Chunks](chunks): how L# is loaded and packaged
+- [Standard Library](standard-library): what out-of-the-box functionality is available with L#
 
 The name L# is pronounced "L Sharp".
 

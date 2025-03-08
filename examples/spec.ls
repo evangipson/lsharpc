@@ -1,3 +1,9 @@
+/* grab the io library for it's logging functions */
+grab io
+
+/* A normal logging function */
+io.log('A normal call to io.log from L#.')
+
 /* declaring and assigning the text type */
 text phrase = 'Hello, world!'
 
@@ -34,3 +40,10 @@ square is shape
     /* defining an implementation of a function from the contract */
     number area()
         return width * height
+
+/* create a square */
+number my_width = 10
+number my_height = my_width + 5
+
+/* notice the square brackets to invoke the constructor, which is similar to how plural types (or collections) work */
+square mysquare = [my_width, my_height]
