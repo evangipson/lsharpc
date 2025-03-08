@@ -9,24 +9,12 @@ static bool copy_tokens(lexeme* new_lexeme, char** tokens)
         return false;
     }
 
-    new_lexeme->tokens = (char**)copy_collection((void**)tokens);
+    new_lexeme->tokens = copy_strings(tokens);
     if (new_lexeme->tokens == NULL)
     {
+        log_error("[copy_expressions]: failed to copy tokens for lexeme");
         return false;
     }
-
-    /* copy the strings that the array points to */
-    size_t token_count = count_collection((void**)tokens);
-    for(size_t i = 0; i < token_count; i++)
-    {
-        new_lexeme->tokens[i] = duplicate_string(tokens[i]);
-        if(new_lexeme->tokens[i] == NULL)
-        {
-            safe_free_collection((void**)new_lexeme->tokens);
-            return false;
-        }
-    }
-
     return true;
 }
 
@@ -39,33 +27,22 @@ static bool copy_expressions(lexeme* new_lexeme, char** expressions)
         return false;
     }
 
-    new_lexeme->expressions = (char**)copy_collection((void**)expressions);
+    new_lexeme->expressions = copy_strings(expressions);
     if (new_lexeme->expressions == NULL)
     {
+        log_error("[copy_expressions]: failed to copy expressions for lexeme");
         return false;
     }
-
-    /* copy the strings that the array points to */
-    size_t expression_count = count_collection((void**)expressions);
-    for(size_t i = 0; i < expression_count; i++)
-    {
-        new_lexeme->expressions[i] = duplicate_string(expressions[i]);
-        if(new_lexeme->expressions[i] == NULL)
-        {
-            safe_free_collection((void**)new_lexeme->expressions);
-            return false;
-        }
-    }
-
     return true;
 }
 
-lexeme* create_lexeme(char** tokens, char** expressions, unsigned int line_number)
+lexeme* create_lexeme(char** tokens, char** expressions, size_t line_number)
 {
     /* handle allocation failing */
     lexeme* new_lexeme = (lexeme*)safe_malloc(sizeof(lexeme));
     if (new_lexeme == NULL)
     {
+        log_error("[create_lexeme]: failed to allocate lexeme");
         return NULL;
     }
 
@@ -74,6 +51,7 @@ lexeme* create_lexeme(char** tokens, char** expressions, unsigned int line_numbe
     /* if the lexeme has no expressions and no tokens, it was not allocated correctly, so return NULL */
     if (copy_tokens(new_lexeme, tokens) == false && copy_expressions(new_lexeme, expressions) == false)
     {
+        log_error("[create_lexeme]: failed to create lexeme, no tokens or expressions provided");
         free_lexeme(new_lexeme);
         return NULL;
     }
@@ -85,10 +63,11 @@ void free_lexeme(lexeme* lexeme)
 {
     if (lexeme == NULL)
     {
+        log_error("[free_lexeme]: attempted to free a null lexeme");
         return;
     }
 
-    safe_free_collection((void**)lexeme->tokens);
-    safe_free_collection((void**)lexeme->expressions);
-    safe_free(lexeme);
+    safe_free_collection((void**)(lexeme->tokens));
+    safe_free_collection((void**)(lexeme->expressions));
+    safe_free((void*)lexeme);
 }

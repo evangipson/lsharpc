@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../extensions/memory_extensions.h"
 
 /// @brief Logs a debug message to the console.
 /// @param message The message to log.

@@ -5,9 +5,8 @@ void* safe_malloc(size_t size)
     void* ptr = malloc(size);
     if (ptr == NULL)
     {
-        fprintf(stderr, "Error: Memory allocation failed (size: %zu)\n", size);
-        /* TODO: use add_compiler_error and take in lsharp_state* state instead of exiting. */
-        exit(1);
+        log_error("[safe_malloc]: Memory allocation failed (size: %zu bytes)", size);
+        exit(-1);
     }
 
     return ptr;
@@ -15,22 +14,31 @@ void* safe_malloc(size_t size)
 
 void safe_free(void* ptr)
 {
-    if (ptr != NULL)
+    if (ptr == NULL)
     {
-        free(ptr);
+        log_error("[safe_free]: provided pointer was already null");
+        return;
     }
+
+    free(ptr);
 }
 
 void safe_free_collection(void** collection)
 {
     if (collection == NULL)
     {
+        log_error("[safe_free_collection]: provided collection was null");
         return;
     }
 
-    for (size_t i = 0; collection[i] != NULL; i++)
+    /* free all elements of the collection */
+    size_t index = 0;
+    while (collection[index] != NULL)
     {
-        safe_free(collection[i]);
+        safe_free(collection[index]);
+        index++;
     }
+
+    /* free the collection itself */
     safe_free(collection);
 }

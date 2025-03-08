@@ -2,6 +2,7 @@
 
 static size_t get_lines(char* file_content, char*** file_lines)
 {
+    /* duplicate the file content to not alter memory of what is provided to the function */
     size_t line_count = 0;
     char* content_copy = duplicate_string(file_content);
     if (content_copy == NULL)
@@ -9,23 +10,7 @@ static size_t get_lines(char* file_content, char*** file_lines)
         return 0;
     }
 
-    char* write_ptr = content_copy;
-    char* read_ptr = content_copy;
-    while (*read_ptr != '\0')
-    {
-        /* handle CRLF files by skipping carriage returns */
-        if (*read_ptr == '\r')
-        {
-            read_ptr++;
-            continue;
-        }
-
-        *write_ptr = *read_ptr;
-        write_ptr++;
-        read_ptr++;
-    }
-    *write_ptr = '\0';
-
+    /* count the lines in the content by searching for new lines */
     char* current = content_copy;
     while (*current != '\0')
     {
@@ -35,14 +20,20 @@ static size_t get_lines(char* file_content, char*** file_lines)
         }
         current++;
     }
-    if (content_copy[strlen(content_copy) - 1] != '\n')
-    {
+
+    /* add a line if the last line doesn't end with a newline */
+    if (line_count > 0 && content_copy[strlen(content_copy) - 1] != '\n') {
         line_count++;
     }
 
-    *file_lines = (char**)safe_malloc(line_count * sizeof(char*));
-    assert(*file_lines != NULL && "[parser]: get_lines unable to allocate memory for reading file's lines.");
+    /* make sure there is at least 1 line in the file provided */
+    assert(line_count > 0 && "[get_lines]: provided file content with 0 lines");
 
+    /* allocate enough space for all the lines and a null terminator at the end */
+    *file_lines = (char**)safe_malloc((line_count + 1) * sizeof(char*));
+    assert(*file_lines != NULL && "[get_lines]: get_lines unable to allocate memory for reading file's lines");
+
+    /* duplicate each line of the file contents */
     current = content_copy;
     size_t line_index = 0;
     char* line_start = current;
@@ -58,49 +49,71 @@ static size_t get_lines(char* file_content, char*** file_lines)
         current++;
     }
 
+    /* handle the last line (if any) */
     if (line_start < current)
     {
         (*file_lines)[line_index] = duplicate_string(line_start);
+        line_index++;
     }
+
+    /* manually null terminate file lines, safe_free_collection relies on a null terminator */
+    (*file_lines)[line_index] = NULL;
 
     safe_free(content_copy);
 
-    assert(line_count > 0 && "[parser]: provided file content with 0 lines.");
     return line_count;
 }
 
 static size_t get_words(char* line, char*** words)
 {
+    /* guard against empty lines */
+    if (line == NULL || strlen(line) == 0)
+    {
+        log_warning("[get_words]: empty line passed to get_words, returning 0 word count");
+        return 0;
+    }
+
+    /* duplicate the line to not alter memory of what is provided to the function */
     size_t word_count = 0;
     char* line_copy = duplicate_string(line);
+    /* guard against duplicate_string failure */
     if (line_copy == NULL)
     {
         return 0;
     }
 
+    /* count the amount of words in the line */
     char* current = line_copy;
     while (*current != '\0')
     {
-        if (*current == ' ')
+        if (*current == ' ' || *current == '\t' || *current == '\n' || *current == '\r')
         {
             word_count++;
         }
         current++;
     }
-    if(line_copy[strlen(line_copy) - 1] != ' ' && line_copy[strlen(line_copy) - 1] != '\t' && strlen(line_copy) > 0)
+
+    /* count the last word of the line, no matter what "end of line" character is at the end */
+    if(line_copy[strlen(line_copy) - 1] != ' '
+        && line_copy[strlen(line_copy) - 1] != '\t'
+        && line_copy[strlen(line_copy) - 1] != '\n'
+        && line_copy[strlen(line_copy) - 1] != '\r'
+        && strlen(line_copy) > 0)
     {
         word_count++;
     }
 
-    *words = (char**)safe_malloc(word_count * sizeof(char*));
-    assert(*words != NULL && "[parser]: get_lines unable to allocate memory for reading words from a line.");
+    /* allocate words with enough memory to accept a null terminator */
+    *words = (char**)safe_malloc((word_count + 1) * sizeof(char*));
+    assert(*words != NULL && "[get_words]: get_lines unable to allocate memory for reading words from a line");
 
+    /* copy the current word into the words array */
     current = line_copy;
     size_t word_index = 0;
     char* word_start = current;
     while (*current != '\0')
     {
-        if (*current == ' ')
+        if (*current == ' ' || *current == '\t' || *current == '\n' || *current == '\r')
         {
             *current = '\0';
             (*words)[word_index] = duplicate_string(word_start);
@@ -110,56 +123,64 @@ static size_t get_words(char* line, char*** words)
         current++;
     }
 
-    if (word_start < current)
+    /* handle the last word ending without a line terminator */
+    if (word_start != current)
     {
         (*words)[word_index] = duplicate_string(word_start);
+        word_index++;
     }
 
+    /* null-terminate the words array */
+    (*words)[word_index] = NULL;
+
     safe_free(line_copy);
+    safe_free(line);
 
     return word_count;
 }
 
 lexeme** get_lexemes(char* file_content)
 {
+    /* get the lines from file content */
     char** file_lines = NULL;
     size_t line_count = get_lines(file_content, &file_lines);
-    log_debug("[parser]: get_lexemes got %d lines from file_content", line_count);
 
-    lexeme** lexemes = (lexeme**)safe_malloc(line_count * (sizeof(lexeme)));
+    /* allocate enough memory for an array of lexemes that will be null-terminated */
+    lexeme** lexemes = (lexeme**)safe_malloc(line_count * (sizeof(lexeme*)));
     if(lexemes == NULL)
     {
+        log_error("[get_lexemes]: failed to allocate memory for lexemes collection.");
         return NULL;
     }
 
+    /* for every line, add a lexeme with tokens and/or expressions */
+    char** words = NULL;
     for(size_t i = 0; i < line_count; i++)
     {
-        log_debug("[parser]: processing line %zu", i + 1);
-
-        char** words = NULL;
-
+        words = NULL;
         char* line = duplicate_string(file_lines[i]);
         if(line == NULL)
         {
-            log_error("[parser]: unable to duplicate line %d", i + 1);
+            log_error("[get_lexemes]: failed to duplicate the file lines string for line %zu", i + 1);
             return NULL;
         }
-        log_info("[parser]: get_lexemes line %d = \"%s\"", i + 1, line);
 
         size_t word_count = get_words(line, &words);
-        log_info("[parser]: get_lexemes found %d words on line %d", word_count, i + 1);
-
-        for(size_t n = 0; n < word_count; n++)
+        if (word_count == 0)
         {
-            log_info("[parser]: word: %s", words[n]);
+            continue;
         }
 
         lexemes[i] = create_lexeme(words, NULL, i);
-
-        safe_free(line);
-        safe_free_collection((void**)words);
     }
+
+    /* null terminate the lexemes collection */
+    lexemes[line_count] = NULL;
+
+    /* free all unused memory */
+    safe_free_collection((void**)words);
     safe_free_collection((void**)file_lines);
+    safe_free((void*)file_content);
 
     return lexemes;
 }

@@ -2,6 +2,7 @@
 #define STRING_EXTENSIONS
 #include <stdlib.h>
 #include <string.h>
+#include "../debug/logger.h"
 #include "memory_extensions.h"
 
 /// @brief Duplicates the `source`, and returns the result.

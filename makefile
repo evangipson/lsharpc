@@ -8,7 +8,9 @@ ifdef OS
 SHELL = C:/Program Files/Git/bin/bash.exe
 endif
 CC = gcc
+DEBUGCC = g++
 CFLAGS = -std=c17 -pedantic -O2 -Wall
+DEBUG_CFLAGS = -std=c17 -pedantic -g -Wall -Wextra -DDEBUG
 
 # Common Commands
 MKDIR = mkdir -p
@@ -34,6 +36,7 @@ TESTS_BUILD_DIR = $(BUILD_DIR)/tests
 
 # Executables
 COMPILER = $(PUBLISH_DIR)/$(COMPILER_NAME).exe
+COMPILER_DEBUG = $(PUBLISH_DIR)/$(COMPILER_NAME)-debug.exe
 COMPILER_TESTS = $(PUBLISH_DIR)/$(COMPILER_NAME)-tests.exe
 
 # Source Files and Objects
@@ -42,6 +45,7 @@ COMPILER_SOURCES = $(shell find $(COMPILER_SRC_DIR) -name "*.c")
 TEST_DEPS = $(shell find $(COMPILER_SRC_DIR)/*/ -name "*.c")
 TEST_FILES = $(shell find $(TESTS_DIR) -name "*.c")
 COMPILER_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(COMPILER_SOURCES))
+COMPILER_DEBUG_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(COMPILER_SOURCES))
 TEST_OBJS = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES)) $(patsubst $(COMPILER_SRC_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_DEPS))
 
 # -----------------------------------------------------------------------------
@@ -57,6 +61,19 @@ $(BUILD_DIR)/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
 
 $(COMPILER): make_build_paths $(COMPILER_OBJS)
 	$(CC) $(COMPILER_OBJS) $(CFLAGS) -o $@
+
+# -----------------------------------------------------------------------------
+# Debug Rules
+# -----------------------------------------------------------------------------
+.PHONY: debug
+debug: $(COMPILER_DEBUG)
+
+$(BUILD_DIR)/debug/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
+	$(MKDIR) "$(dir $@)"
+	$(DEBUGCC) $(DEBUG_CFLAGS) -c $< -o $@
+
+$(COMPILER_DEBUG): make_build_paths $(COMPILER_DEBUG_OBJS)
+	$(DEBUGCC) -fdiagnostics-color=always -g $(COMPILER_DEBUG_OBJS) -o $@
 
 # -----------------------------------------------------------------------------
 # Testing Rules
