@@ -68,56 +68,6 @@ static char* get_identifier(char* source, int* position)
     return identifier;
 }
 
-static char* get_number_literal(char* source, int* position)
-{
-    int start_pos = *position;
-    int length = 0;
-    bool has_decimal = false;
-
-    /* consume digits and optional decimal point */
-    while (isdigit(source[*position]) || source[*position] == '.')
-    {
-        /* consume any non-decimal point characters */
-        if (source[*position] != '.')
-        {
-            (*position)++;
-            length++;
-            continue;
-        }
-
-        /* multiple decimal points are not allowed */
-        if (has_decimal)
-        {
-            log_error("[get_number_literal]: could not get number literal, found multiple decimal points");
-            return NULL;
-        }
-
-        /* consume a decimal point character */
-        has_decimal = true;
-        (*position)++;
-        length++;
-    }
-
-    /* allocate memory for the number literal string with null-terminator */
-    char* number = (char*)malloc((length + 1) * sizeof(char));
-    if (number == NULL)
-    {
-        log_error("[get_number_literal]: failed to get number literal, could not allocate %zu bytes of memory", (length + 1) * sizeof(char));
-        return NULL;
-    }
-
-    /* Copy the number literal characters and add null-terminator */
-    memcpy(number, &source[start_pos], length);
-    if(number == NULL)
-    {
-        log_error("[get_number_literal]: failed to create number literal from source");
-        return NULL;
-    }
-    number[length] = '\0';
-
-    return number;
-}
-
 static char* get_string_literal(char* source, int* position)
 {
     /* consume the opening quote (') */
@@ -164,6 +114,12 @@ static char* get_string_literal(char* source, int* position)
 
 static token* get_next_token(char* source, int* position, int* line, int* column)
 {
+    /* check for end of file at the very beginning */
+    if (source[*position] == '\0')
+    {
+        return create_token(TOKEN_END_OF_FILE, NULL, *line, *column);
+    }
+
     /* loop to handle skipping comments and whitespace, to avoid recursion */
     while (true)
     {
@@ -218,7 +174,7 @@ static token* get_next_token(char* source, int* position, int* line, int* column
         break;
     }
 
-    /* check for end of file */
+    /* check for end of file again, in case it was reached during comment or whitespace */
     if (source[*position] == '\0') {
         return create_token(TOKEN_END_OF_FILE, NULL, *line, *column);
     }
@@ -265,20 +221,50 @@ static token* get_next_token(char* source, int* position, int* line, int* column
         return token;
     }
 
-    /* check for number literals */
+    /* check for number literals and handle decimal point interpretation */
     if (isdigit(source[*position]) || source[*position] == '.')
     {
-        char* number = get_number_literal(source, position);
-        if (number == NULL)
+        int start_pos = *position;
+        int length = 0;
+        bool is_number = false;
+        bool has_decimal = false;
+
+        /* consume digits and optional decimal point */
+        while (isdigit(source[*position]) || source[*position] == '.')
         {
-            return create_token(TOKEN_ERROR, NULL, *line, *column);
+            if (source[*position] != '.')
+            {
+                /* mark as number if digit found */
+                is_number = true;
+                (*position)++;
+                length++;
+                continue;
+            }
+
+            if (has_decimal)
+            {
+                /* multiple decimal points, error */
+                return create_token(TOKEN_ERROR, "Invalid number format", *line, *column);
+            }
+
+            /* mark as decimal if decimal found */
+            has_decimal = true;
+            (*position)++;
+            length++;
         }
 
-        token* token = create_token(TOKEN_NUMBER_LITERAL, number, *line, *column);
+        /* check if it's a number or just a period */
+        if (is_number)
+        {
+            char* number = (char*)safe_malloc((length + 1) * sizeof(char));
+            memcpy(number, &source[start_pos], length);
+            number[length] = '\0';
+            return create_token(TOKEN_NUMBER_LITERAL, number, *line, *column);
+        }
 
-        safe_free(number);
-
-        return token;
+        /* it's just a period, correct position and send back punctuation */
+        (*position) = start_pos + 1;
+        return create_token(TOKEN_PUNCTUATION_PERIOD, ".", *line, *column);
     }
 
     /* check for string literals */
@@ -351,10 +337,10 @@ static token* get_next_token(char* source, int* position, int* line, int* column
     }
 }
 
-token** get_tokens(char* source)
+token** get_tokens(char* source, size_t* token_count)
 {
     token** tokens = NULL;
-    size_t token_count = 0;
+    size_t token_amount = 0;
     size_t tokens_capacity = 10;
     int position = 0;
     int line = 1;
@@ -365,6 +351,7 @@ token** get_tokens(char* source)
     if (tokens == NULL)
     {
         log_error("[get_tokens]: failed to allocate memory for tokens");
+        *token_count = token_amount;
         return NULL;
     }
 
@@ -372,10 +359,10 @@ token** get_tokens(char* source)
     while (current_token != NULL && current_token->type != TOKEN_END_OF_FILE)
     {
         /* if the buffer isn't full, consume a token at a time */
-        if (token_count < tokens_capacity)
+        if (token_amount < tokens_capacity)
         {
-            tokens[token_count] = current_token;
-            token_count++;
+            tokens[token_amount] = current_token;
+            token_amount++;
             current_token = get_next_token(source, &position, &line, &column);
             continue;
         }
@@ -387,19 +374,21 @@ token** get_tokens(char* source)
         {
             log_error("[get_tokens]: failed to reallocate memory for tokens");
             free_tokens(tokens);
+            *token_count = token_amount;
             return NULL;
         }
         tokens = temp_tokens;
 
         /* consume the next token after reallocating */
-        tokens[token_count] = current_token;
-        token_count++;
+        tokens[token_amount] = current_token;
+        token_amount++;
         current_token = get_next_token(source, &position, &line, &column);
     }
 
     /* add a null-terminator */
-    tokens = (token**)realloc(tokens, (token_count + 1) * sizeof(token*));
-    tokens[token_count] = NULL;
+    tokens = (token**)realloc(tokens, (token_amount + 1) * sizeof(token*));
+    tokens[token_amount] = NULL;
 
+    *token_count = token_amount;
     return tokens;
 }
