@@ -42,6 +42,8 @@ typedef enum token_type {
     TOKEN_ERROR
 } token_type;
 
+/// @struct token
+/// @brief Represents an L# token.
 typedef struct token token;
 
 struct token
