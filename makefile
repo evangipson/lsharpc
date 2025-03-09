@@ -25,9 +25,11 @@ endif
 # -----------------------------------------------------------------------------
 
 COMPILER_NAME = lsharpc
+RUNTIME_NAME = lsharp
 
 # Directories
 COMPILER_SRC_DIR = src/compiler
+RUNTIME_SRC_DIR = src/runtime
 BUILD_DIR = build
 PUBLISH_DIR = bin
 DOCS_DIR = docs
@@ -38,14 +40,20 @@ TESTS_BUILD_DIR = $(BUILD_DIR)/tests
 COMPILER = $(PUBLISH_DIR)/$(COMPILER_NAME).exe
 COMPILER_DEBUG = $(PUBLISH_DIR)/$(COMPILER_NAME)-debug.exe
 COMPILER_TESTS = $(PUBLISH_DIR)/$(COMPILER_NAME)-tests.exe
+RUNTIME = $(PUBLISH_DIR)/$(RUNTIME_NAME).exe
+RUNTIME_DEBUG = $(PUBLISH_DIR)/$(RUNTIME_NAME)-debug.exe
 
 # Source Files and Objects
 COMPILER_HEADERS = $(shell find $(COMPILER_SRC_DIR) -name "*.h")
 COMPILER_SOURCES = $(shell find $(COMPILER_SRC_DIR) -name "*.c")
+RUNTIME_HEADERS = $(shell find $(RUNTIME_SRC_DIR) -name "*.h")
+RUNTIME_SOURCES = $(shell find $(RUNTIME_SRC_DIR) -name "*.c")
 TEST_DEPS = $(shell find $(COMPILER_SRC_DIR)/*/ -name "*.c")
 TEST_FILES = $(shell find $(TESTS_DIR) -name "*.c")
 COMPILER_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(COMPILER_SOURCES))
+RUNTIME_OBJS = $(patsubst $(RUNTIME_SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RUNTIME_SOURCES))
 COMPILER_DEBUG_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(COMPILER_SOURCES))
+RUNTIME_DEBUG_OBJS = $(patsubst $(RUNTIME_SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(RUNTIME_SOURCES))
 TEST_OBJS = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES)) $(patsubst $(COMPILER_SRC_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_DEPS))
 
 # -----------------------------------------------------------------------------
@@ -53,7 +61,9 @@ TEST_OBJS = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES)) $(
 # -----------------------------------------------------------------------------
 
 .PHONY: all
-all: $(COMPILER)
+all: compiler runtime
+compiler: $(COMPILER)
+runtime: $(RUNTIME)
 
 $(BUILD_DIR)/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
 	$(MKDIR) "$(dir $@)"
@@ -61,6 +71,13 @@ $(BUILD_DIR)/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
 
 $(COMPILER): make_build_paths $(COMPILER_OBJS)
 	$(CC) $(COMPILER_OBJS) $(CFLAGS) -o $@
+
+$(BUILD_DIR)/%.o: $(RUNTIME_SRC_DIR)/%.c $(RUNTIME_HEADERS)
+	$(MKDIR) "$(dir $@)"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(RUNTIME): make_build_paths $(RUNTIME_OBJS)
+	$(CC) $(RUNTIME_OBJS) $(CFLAGS) -o $@
 
 # -----------------------------------------------------------------------------
 # Debug Rules
@@ -74,6 +91,9 @@ $(BUILD_DIR)/debug/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
 
 $(COMPILER_DEBUG): make_build_paths $(COMPILER_DEBUG_OBJS)
 	$(DEBUGCC) -fdiagnostics-color=always -g $(COMPILER_DEBUG_OBJS) -o $@
+
+$(RUNTIME_DEBUG): make_build_paths $(RUNTIME_DEBUG_OBJS)
+	$(DEBUGCC) -fdiagnostics-color=always -g $(RUNTIME_DEBUG_OBJS) -o $@
 
 # -----------------------------------------------------------------------------
 # Testing Rules

@@ -46,9 +46,13 @@ int main(int argc, const char* argv[])
 
     abstract_syntax_node* abstract_syntax_tree = get_abstract_syntax_tree(tokens, token_count);
     print_ast(abstract_syntax_tree);
-
     free_tokens(tokens);
+
+    int instruction_count;
+    instruction* instructions = compile_ast_to_bytecode(abstract_syntax_tree, &instruction_count, "program.lbc");
+
     free_ast(abstract_syntax_tree);
+    safe_free_collection((void**)instructions);
 
     return 1;
 }
