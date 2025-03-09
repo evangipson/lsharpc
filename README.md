@@ -43,10 +43,13 @@ io.information('Temperature set: `temperature`')
 1. Clone or fork the repo
 1. Navigate to project root
 1. Use the [makefile](makefile) to compile or clean the project
-    - `make` compiles the program
+    - `make` compiles both the compiler and the runtime
+    - `make compiler` compiles the compiler
+    - `make runtime` compiles the runtime
     - `make tests` compiles the unit tests for the program
     - `make clean` removes all build artifacts, docs, and the compiled program
     - `make docs` generates and launches the documentation
+    - `make rebuild` runs `make clean` then `make`
 1. Run `bin/lsharpc examples/simple.ls` to compile the simple L# source code
 
 ## Architecture
