@@ -39,10 +39,6 @@ number temperature = 98.4
 io.information('Temperature set: `temperature`')
 ```
 
-It will produce output that looks like this:
-
-![A screenshot of console output of a simple L# program.](assets/simple-file-console-output.png)
-
 ## Getting Started
 1. Clone or fork the repo
 1. Navigate to project root
@@ -54,9 +50,11 @@ It will produce output that looks like this:
 1. Run `bin/lsharpc examples/simple.ls` to compile the simple L# source code
 
 ## Architecture
-The compiler will read the L# file, break it up into understandable lexemes, parse those lexemes into statements, then invoke those statements.
+The compiler will read the L# file, tokenize the source code, then break the tokens into an abstract syntax tree.
 
-It will also raise errors to the caller if errors do occur.
+The abstract syntax tree is then translated to bytecode instructions through code generation, which will create an .lbc (L# bytecode) file.
+
+The .lbc file is then run by the LVM (L# virtual machine) which produces the output of the program.
 
 ## Todo
 - Finish L# language spec

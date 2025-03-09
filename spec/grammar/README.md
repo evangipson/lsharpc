@@ -6,7 +6,7 @@ This section of the L# specification describes how a source file is interpreted 
 Conceptually speaking, an L# program is compiled using three steps:
 1. Transformation, which converts an L# source code file into a series of [tokens](tokens.md)
 1. Token analysis, which translates a series of tokens into an [abstract syntax tree](abstract-syntax-tree.md)
-1. Syntax analysis, which translates the abstract syntax tree into ordered executable instructions
+1. Syntax analysis, which translates the abstract syntax tree into bytecode instructions
 
 ## Extended Backus-Naur Form
 This is a representation of the grammar of L# in EBNF form.
