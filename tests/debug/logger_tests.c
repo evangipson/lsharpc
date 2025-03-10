@@ -1,4 +1,4 @@
-#include "../../src/compiler/debug/logger.h"
+#include "../../src/core/logger/logger.h"
 #include <assert.h>
 #include <locale.h>
 #include <setjmp.h>

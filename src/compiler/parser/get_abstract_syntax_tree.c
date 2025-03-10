@@ -97,7 +97,14 @@ static abstract_syntax_node* parse_factor_expression()
     }
     else if (peek_token()->type == TOKEN_IDENTIFIER)
     {
-        return create_ast_node_identifier(duplicate_string(consume_token()->value));
+        char* token_identifier_value = duplicate_string(consume_token()->value);
+        if(token_identifier_value != NULL)
+        {
+            return create_ast_node_identifier(token_identifier_value);
+        }
+
+        /* handle error: unable to allocate memory identifier */
+        return create_ast_node_error("[parser error]: unable to parse expression, error allocating memory for identifier", peek_token()->line, peek_token()->column, 22);
     }
     else if (peek_token()->type == TOKEN_PUNCTUATION_OPEN_PAREN)
     {
@@ -110,15 +117,20 @@ static abstract_syntax_node* parse_factor_expression()
             consume_token();
             return expression;
         }
-        else
-        {
-            /* handle error: expected ")" */
-            return create_ast_node_error("[parser error]: unable to parse expression, expected closing parenthesis", peek_token()->line, peek_token()->column, 5);
-        }
+
+        /* handle error: expected ")" */
+        return create_ast_node_error("[parser error]: unable to parse expression, expected closing parenthesis", peek_token()->line, peek_token()->column, 5);
     }
     else if (peek_token()->type == TOKEN_STRING_LITERAL)
     {
-        return create_ast_node_string_literal(duplicate_string(consume_token()->value));
+        char* string_literal_value = duplicate_string(consume_token()->value);
+        if(string_literal_value != NULL)
+        {
+            return create_ast_node_string_literal(string_literal_value);
+        }
+
+        /* handle error: unable to allocate string literal value */
+        return create_ast_node_error("[parser error]: unable to parse expression, error allocating memory for string literal value", peek_token()->line, peek_token()->column, 21);
     }
     else if (peek_token()->type == TOKEN_BIT_LITERAL_ON)
     {

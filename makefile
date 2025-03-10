@@ -24,17 +24,22 @@ endif
 # Project Directories and Files
 # -----------------------------------------------------------------------------
 
-COMPILER_NAME = lsharpc
-RUNTIME_NAME = lsharp
+COMPILER_NAME = lsc
+RUNTIME_NAME = lsr
 
 # Directories
-COMPILER_SRC_DIR = src/compiler
-RUNTIME_SRC_DIR = src/runtime
+SRC_DIR = src
+CORE_SRC_DIR = $(SRC_DIR)/core
+COMPILER_SRC_DIR = $(SRC_DIR)/compiler
+RUNTIME_SRC_DIR = $(SRC_DIR)/runtime
 BUILD_DIR = build
+CORE_BUILD_DIR = $(BUILD_DIR)/core
+COMPILER_BUILD_DIR = $(BUILD_DIR)/compiler
+RUNTIME_BUILD_DIR = $(BUILD_DIR)/runtime
+TESTS_BUILD_DIR = $(BUILD_DIR)/tests
 PUBLISH_DIR = bin
 DOCS_DIR = docs
 TESTS_DIR = tests
-TESTS_BUILD_DIR = $(BUILD_DIR)/tests
 
 # Executables
 COMPILER = $(PUBLISH_DIR)/$(COMPILER_NAME).exe
@@ -44,16 +49,20 @@ RUNTIME = $(PUBLISH_DIR)/$(RUNTIME_NAME).exe
 RUNTIME_DEBUG = $(PUBLISH_DIR)/$(RUNTIME_NAME)-debug.exe
 
 # Source Files and Objects
+CORE_HEADERS = $(shell find $(CORE_SRC_DIR) -name "*.h")
+CORE_SOURCES = $(shell find $(CORE_SRC_DIR) -name "*.c")
 COMPILER_HEADERS = $(shell find $(COMPILER_SRC_DIR) -name "*.h")
 COMPILER_SOURCES = $(shell find $(COMPILER_SRC_DIR) -name "*.c")
 RUNTIME_HEADERS = $(shell find $(RUNTIME_SRC_DIR) -name "*.h")
 RUNTIME_SOURCES = $(shell find $(RUNTIME_SRC_DIR) -name "*.c")
 TEST_DEPS = $(shell find $(COMPILER_SRC_DIR)/*/ -name "*.c")
 TEST_FILES = $(shell find $(TESTS_DIR) -name "*.c")
-COMPILER_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(COMPILER_SOURCES))
-RUNTIME_OBJS = $(patsubst $(RUNTIME_SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(RUNTIME_SOURCES))
-COMPILER_DEBUG_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(COMPILER_SOURCES))
-RUNTIME_DEBUG_OBJS = $(patsubst $(RUNTIME_SRC_DIR)/%.c,$(BUILD_DIR)/debug/%.o,$(RUNTIME_SOURCES))
+CORE_OBJS = $(patsubst $(CORE_SRC_DIR)/%.c,$(CORE_BUILD_DIR)/%.o,$(CORE_SOURCES))
+COMPILER_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(COMPILER_BUILD_DIR)/%.o,$(COMPILER_SOURCES))
+RUNTIME_OBJS = $(patsubst $(RUNTIME_SRC_DIR)/%.c,$(RUNTIME_BUILD_DIR)/%.o,$(RUNTIME_SOURCES))
+CORE_DEBUG_OBJS = $(patsubst $(CORE_SRC_DIR)/%.c,$(CORE_BUILD_DIR)/debug/%.o,$(CORE_SOURCES))
+COMPILER_DEBUG_OBJS = $(patsubst $(COMPILER_SRC_DIR)/%.c,$(COMPILER_BUILD_DIR)/debug/%.o,$(COMPILER_SOURCES))
+RUNTIME_DEBUG_OBJS = $(patsubst $(RUNTIME_SRC_DIR)/%.c,$(RUNTIME_BUILD_DIR)/debug/%.o,$(RUNTIME_SOURCES))
 TEST_OBJS = $(patsubst $(TESTS_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_FILES)) $(patsubst $(COMPILER_SRC_DIR)/%.c,$(TESTS_BUILD_DIR)/%.o,$(TEST_DEPS))
 
 # -----------------------------------------------------------------------------
@@ -65,35 +74,44 @@ all: compiler runtime
 compiler: $(COMPILER)
 runtime: $(RUNTIME)
 
-$(BUILD_DIR)/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
+$(CORE_BUILD_DIR)/%.o: $(CORE_SRC_DIR)/%.c $(CORE_HEADERS)
 	$(MKDIR) "$(dir $@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(COMPILER): make_build_paths $(COMPILER_OBJS)
-	$(CC) $(COMPILER_OBJS) $(CFLAGS) -o $@
-
-$(BUILD_DIR)/%.o: $(RUNTIME_SRC_DIR)/%.c $(RUNTIME_HEADERS)
+$(COMPILER_BUILD_DIR)/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
 	$(MKDIR) "$(dir $@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(RUNTIME): make_build_paths $(RUNTIME_OBJS)
-	$(CC) $(RUNTIME_OBJS) $(CFLAGS) -o $@
+$(RUNTIME_BUILD_DIR)/%.o: $(RUNTIME_SRC_DIR)/%.c $(RUNTIME_HEADERS)
+	$(MKDIR) "$(dir $@)"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(COMPILER): make_build_paths $(COMPILER_OBJS) $(CORE_OBJS)
+	$(CC) $(CORE_OBJS) $(COMPILER_OBJS) $(CFLAGS) -o $@
+
+$(RUNTIME): make_build_paths $(RUNTIME_OBJS) $(CORE_OBJS)
+	$(CC) $(CORE_OBJS) $(RUNTIME_OBJS) $(CFLAGS) -o $@
 
 # -----------------------------------------------------------------------------
 # Debug Rules
 # -----------------------------------------------------------------------------
-.PHONY: debug
-debug: $(COMPILER_DEBUG)
+.PHONY: cdebug rdebug
+cdebug: $(COMPILER_DEBUG)
+rdebug: $(RUNTIME_DEBUG)
 
-$(BUILD_DIR)/debug/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
+$(COMPILER_BUILD_DIR)/debug/%.o: $(COMPILER_SRC_DIR)/%.c $(COMPILER_HEADERS)
 	$(MKDIR) "$(dir $@)"
 	$(DEBUGCC) $(DEBUG_CFLAGS) -c $< -o $@
 
-$(COMPILER_DEBUG): make_build_paths $(COMPILER_DEBUG_OBJS)
-	$(DEBUGCC) -fdiagnostics-color=always -g $(COMPILER_DEBUG_OBJS) -o $@
+$(RUNTIME_BUILD_DIR)/debug/%.o: $(RUNTIME_SRC_DIR)/%.c $(RUNTIME_HEADERS)
+	$(MKDIR) "$(dir $@)"
+	$(DEBUGCC) $(DEBUG_CFLAGS) -c $< -o $@
 
-$(RUNTIME_DEBUG): make_build_paths $(RUNTIME_DEBUG_OBJS)
-	$(DEBUGCC) -fdiagnostics-color=always -g $(RUNTIME_DEBUG_OBJS) -o $@
+$(COMPILER_DEBUG): make_build_paths $(COMPILER_DEBUG_OBJS) $(CORE_DEBUG_OBJS)
+	$(DEBUGCC) -fdiagnostics-color=always -g  $(CORE_DEBUG_OBJS) $(COMPILER_DEBUG_OBJS) -o $@
+
+$(RUNTIME_DEBUG): make_build_paths $(RUNTIME_DEBUG_OBJS) $(CORE_DEBUG_OBJS)
+	$(DEBUGCC) -fdiagnostics-color=always -g $(CORE_DEBUG_OBJS) $(RUNTIME_DEBUG_OBJS) -o $@
 
 # -----------------------------------------------------------------------------
 # Testing Rules

@@ -3,13 +3,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../extensions/memory_extensions.h"
-#include "../extensions/string_extensions.h"
+#include "../../core/extensions/memory_extensions.h"
+#include "../../core/extensions/string_extensions.h"
 
 typedef enum symbol_type {
     SYMBOL_VARIABLE,
     SYMBOL_FUNCTION,
-    /* TODO: other symbol types */
+    SYMBOL_NUMBER,
+    SYMBOL_BIT,
+    SYMBOL_TEXT,
+    SYMBOL_UNKNOWN
 } symbol_type;
 
 typedef struct symbol symbol;

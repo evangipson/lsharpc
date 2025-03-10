@@ -2,7 +2,7 @@
 #define MEMORY_EXTENSIONS
 #include <stdio.h>
 #include <stdlib.h>
-#include "../debug/logger.h"
+#include "../logger/logger.h"
 
 /// @brief Safely allocates memory of `size` bytes, or exits the program.
 /// @param size The amount of bytes to allocate in memory.

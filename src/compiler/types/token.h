@@ -2,9 +2,9 @@
 #define TOKEN
 #include <stdbool.h>
 #include <stdlib.h>
-#include "../debug/logger.h"
-#include "../extensions/memory_extensions.h"
-#include "../extensions/string_extensions.h"
+#include "../../core/extensions/memory_extensions.h"
+#include "../../core/extensions/string_extensions.h"
+#include "../../core/logger/logger.h"
 
 /// @enum token_type
 /// @brief A collection of L# token types.

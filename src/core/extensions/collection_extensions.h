@@ -1,7 +1,7 @@
 #ifndef COLLECTION_EXTENSIONS
 #define COLLECTION_EXTENSIONS
 #include <stdlib.h>
-#include "../debug/logger.h"
+#include "../logger/logger.h"
 #include "memory_extensions.h"
 #include "string_extensions.h"
 

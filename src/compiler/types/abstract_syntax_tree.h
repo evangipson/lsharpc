@@ -1,8 +1,8 @@
 #ifndef ABSTRACT_SYNTAX_TREE
 #define ABSTRACT_SYNTAX_TREE
-#include "../extensions/collection_extensions.h"
-#include "../extensions/memory_extensions.h"
-#include "../extensions/string_extensions.h"
+#include "../../core/extensions/collection_extensions.h"
+#include "../../core/extensions/memory_extensions.h"
+#include "../../core/extensions/string_extensions.h"
 
 /// @enum abstract_syntax_node_type
 /// @brief A collection of abstract syntax node types for L#.

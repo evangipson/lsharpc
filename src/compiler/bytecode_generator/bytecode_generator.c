@@ -7,6 +7,9 @@ bytecode_generator* create_bytecode_generator()
     generator->instructions = (instruction*)safe_malloc(generator->instruction_capacity * sizeof(instruction));
     generator->instruction_count = 0;
     generator->symbols = create_symbol_table(100);
+    generator->object_capacity = 100;
+    generator->object_count = 0;
+    generator->objects = (char**)safe_malloc(generator->object_capacity * sizeof(char*));
     return generator;
 }
 
@@ -73,13 +76,31 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
         }
         case AST_NODE_NUMBER_LITERAL:
         {
-            emit_instruction(generator, (instruction){OP_LOAD_CONST, {.d = node->data.number_literal.value}});
+            log_debug("[generate_bytecode]: found number literal, adding it to bytecode objects");
+            emit_instruction(generator, (instruction){OP_LOAD_CONST, {.d = node->data.number_literal.value}, OP_TYPE_NUMBER});
             break;
         }
         case AST_NODE_STRING_LITERAL:
         {
-            /* memory allocation will be handled by the runtime, and the string itself will be an index into the objects array */
-            emit_instruction(generator, (instruction){OP_LOAD_CONST, {.s = node->data.string_literal.value}});
+            log_debug("[generate_bytecode]: found string literal, adding it to bytecode objects");
+            generator->objects = (char**)realloc(generator->objects, generator->object_count++ * sizeof(char*));
+            generator->objects[generator->object_count] = duplicate_string(node->data.string_literal.value);
+            log_debug("[generate_bytecode]: generator->object_count is %d", generator->object_count);
+            log_debug("[generate_bytecode]: generator->objects[generator->object_count] is %s", (char*)generator->objects[generator->object_count]);
+
+            /* store the index to the string object, not the string itself */
+            log_debug("[generate_bytecode]: emitting OP_LOAD_CONST string index %d", generator->object_count);
+            instruction* inst = (instruction*)safe_malloc(sizeof(instruction));
+            if(inst == NULL)
+            {
+                log_error("[generate_bytecode]: unable to allocate memory for string literal instruction");
+                safe_free(inst);
+                break;
+            }
+            inst->op_code = OP_LOAD_CONST;
+            inst->op_type = OP_TYPE_TEXT;
+            inst->operand.i = generator->object_count;
+            emit_instruction(generator, *inst);
             break;
         }
         case AST_NODE_TEMPLATE_STRING:
@@ -91,7 +112,7 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
         }
         case AST_NODE_BIT_LITERAL:
         {
-            emit_instruction(generator, (instruction){OP_LOAD_CONST, {.b = node->data.bit_literal.value}});
+            emit_instruction(generator, (instruction){OP_LOAD_CONST, {.b = node->data.bit_literal.value}, OP_TYPE_BIT});
             break;
         }
         case AST_NODE_ARRAY_LITERAL:
@@ -121,10 +142,32 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
         }
         case AST_NODE_DECLARATION:
         {
-            generate_bytecode(generator, node->data.declaration_node.expression);
+            /* insert the symbol into the symbol table first */
             int variable_index = generator->variable_count++;
+
+            symbol_type variable_type = SYMBOL_UNKNOWN;
+            if (strcmp(node->data.declaration_node.type_name, "number") == 0)
+            {
+                variable_type = SYMBOL_NUMBER;
+            }
+            else if (strcmp(node->data.declaration_node.type_name, "text") == 0)
+            {
+                variable_type = SYMBOL_TEXT;
+            }
+            else if (strcmp(node->data.declaration_node.type_name, "bit") == 0)
+            {
+                variable_type = SYMBOL_BIT;
+            }
+
             insert_symbol(generator->symbols, node->data.declaration_node.variable_name, SYMBOL_VARIABLE, variable_index);
-            emit_instruction(generator, (instruction){OP_STORE_VAR, {.variable = {variable_index}}});
+
+            /* generate bytecode for the initializer expression */
+            generate_bytecode(generator, node->data.declaration_node.expression);
+
+            /* emit OP_STORE_VAR with the variable's index and type. */
+            instruction store_var_instr = {OP_STORE_VAR, {.variable = {variable_index, variable_type}}, OP_TYPE_VARIABLE};
+            emit_instruction(generator, store_var_instr);
+
             break;
         }
         case AST_NODE_FUNCTION_CALL:
@@ -136,16 +179,9 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
             }
         
             /* handle built-in functions */
-            if (strcmp(node->data.function_call.function_name, "io.log") == 0)
-            {
-                emit_instruction(generator, (instruction){OP_PRINT, {0}});
-            }
-            else
-            {
-                int function_index = generator->function_count++;
-                insert_symbol(generator->symbols, node->data.function_call.function_name, SYMBOL_FUNCTION, function_index);
-                emit_instruction(generator, (instruction){OP_CALL, {.call = {function_index}}});
-            }
+            int function_index = generator->function_count++;
+            insert_symbol(generator->symbols, node->data.function_call.function_name, SYMBOL_FUNCTION, function_index);
+            emit_instruction(generator, (instruction){OP_CALL, {.call = {function_index}}});
             break;
         }
         case AST_NODE_GRAB_STATEMENT:
@@ -160,7 +196,6 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
             log_error("[generate_bytecode]: compilation error %d: %s", node->data.error_node.code, node->data.error_node.message);
             break;
         }
-        // ... Handle other AST node types ...
         default:
             log_error("[generate_bytecode]: unknown abstract syntax tree node type.");
             exit(1);
@@ -175,14 +210,13 @@ instruction* compile_ast_to_bytecode(abstract_syntax_node* ast, int* instruction
     *instruction_count = generator->instruction_count;
     instruction* instructions = generator->instructions;
 
-    write_bytecode_to_file(instructions, *instruction_count, output_filename);
-
+    write_bytecode_to_file(instructions, *instruction_count, generator->objects, generator->object_count, output_filename);
     safe_free(generator);
 
     return instructions;
 }
 
-void write_bytecode_to_file(instruction* instructions, int instruction_count, const char* filename)
+void write_bytecode_to_file(instruction* instructions, int instruction_count, char** objects, int object_count, const char* filename)
 {
     /* open the file in binary write mode */
     FILE* file = fopen(filename, "wb");
@@ -192,13 +226,32 @@ void write_bytecode_to_file(instruction* instructions, int instruction_count, co
         return;
     }
 
+    // Write object_count
+    fwrite(&object_count, sizeof(int), 1, file);
+
+    // Write objects
+    for (int i = 0; i < object_count; i++)
+    {
+        int string_length = strlen(objects[i]);
+        fwrite(&string_length, sizeof(int), 1, file);
+        fwrite(objects[i], sizeof(char), string_length, file);
+    }
+
     /* write instruction count */
     fwrite(&instruction_count, sizeof(int), 1, file);
 
     /* write instructions */
-    for (int i = 0; i < instruction_count; i++) {
+    for (int i = 0; i < instruction_count; i++)
+    {
         fwrite(&instructions[i].op_code, sizeof(op_code), 1, file);
+        
+        /* write out size of operand */
+        size_t size_of_operand = sizeof(size_t);
+        fwrite(&size_of_operand, sizeof(size_t), 1, file);
+        /* write out operand itself */
         fwrite(&instructions[i].operand, sizeof(instructions[i].operand), 1, file);
+        
+        fwrite(&instructions[i].op_type, sizeof(op_type), 1, file);
     }
 
     fclose(file);

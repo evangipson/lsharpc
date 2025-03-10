@@ -10,12 +10,6 @@ io.information('A normal call to io.information from L#.')
 io.warning('A normal call to io.warning from L#.')
 io.error('A normal call to io.error from L#.')
 
-/* Full suite of log functions with severity specified */
-io.log('A call to io.log with "debug" severity from L#.', 1)
-io.log('A call to io.log with "information" severity from L#.', 2)
-io.log('A call to io.log with "warning" severity from L#.', 3)
-io.log('A call to io.log with "error" severity from L#.', 4)
-
 /* declaring and assiging the number type */
 number temperature = 98.4
 

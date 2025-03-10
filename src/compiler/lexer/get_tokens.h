@@ -3,10 +3,10 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "../debug/logger.h"
+#include "../../core/extensions/memory_extensions.h"
+#include "../../core/extensions/string_extensions.h"
+#include "../../core/logger/logger.h"
 #include "../types/token.h"
-#include "../extensions/memory_extensions.h"
-#include "../extensions/string_extensions.h"
 
 /// @brief Gets all tokens from the L# `source`.
 /// @param source The L# source code to get tokens from.

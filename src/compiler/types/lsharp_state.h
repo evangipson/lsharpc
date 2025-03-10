@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../extensions/collection_extensions.h"
-#include "../extensions/memory_extensions.h"
-#include "../extensions/string_extensions.h"
+#include "../../core/extensions/collection_extensions.h"
+#include "../../core/extensions/memory_extensions.h"
+#include "../../core/extensions/string_extensions.h"
 
 /// @enum error_type
 /// @brief A collection of compiler error types.

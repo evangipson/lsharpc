@@ -2,7 +2,7 @@
 #define LSHARPC
 #include <assert.h>
 #include <string.h>
-#include "debug/logger.h"
+#include "../core/logger/logger.h"
 #include "file/read_file.h"
 #include "lexer/get_tokens.h"
 #include "parser/get_abstract_syntax_tree.h"
