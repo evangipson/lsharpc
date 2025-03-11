@@ -50,6 +50,7 @@ int main(int argc, const char* argv[])
 
     int instruction_count;
     instruction* instructions = compile_ast_to_bytecode(abstract_syntax_tree, &instruction_count, "program.lbc");
+    log_info("[lsharpc]: compiled bytecode into file \"program.lbc\"");
 
     free_ast(abstract_syntax_tree);
     safe_free_collection((void**)instructions);

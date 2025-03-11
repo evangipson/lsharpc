@@ -83,9 +83,13 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
         case AST_NODE_STRING_LITERAL:
         {
             log_debug("[generate_bytecode]: found string literal, adding it to bytecode objects");
-            generator->objects = (char**)realloc(generator->objects, generator->object_count++ * sizeof(char*));
+            generator->objects = (char**)realloc(generator->objects, (generator->object_count + 1) * sizeof(char*));
+            if(generator->objects == NULL)
+            {
+                log_error("[generate_bytecode]: unable to allocate memory for generator->objects");
+                break;
+            }
             generator->objects[generator->object_count] = duplicate_string(node->data.string_literal.value);
-            log_debug("[generate_bytecode]: generator->object_count is %d", generator->object_count);
             log_debug("[generate_bytecode]: generator->objects[generator->object_count] is %s", (char*)generator->objects[generator->object_count]);
 
             /* store the index to the string object, not the string itself */
@@ -101,6 +105,10 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
             inst->op_type = OP_TYPE_TEXT;
             inst->operand.i = generator->object_count;
             emit_instruction(generator, *inst);
+
+            generator->object_count++;
+            log_debug("[generate_bytecode]: generator->object_count has been incremented to %d", generator->object_count);
+
             break;
         }
         case AST_NODE_TEMPLATE_STRING:
@@ -197,8 +205,10 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
             break;
         }
         default:
+        {
             log_error("[generate_bytecode]: unknown abstract syntax tree node type.");
             exit(1);
+        }
     }
 }
 
