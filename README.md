@@ -50,7 +50,8 @@ io.information('Temperature set: `temperature`')
     - `make clean` removes all build artifacts, docs, and the compiled program
     - `make docs` generates and launches the documentation
     - `make rebuild` runs `make clean` then `make`
-1. Run `bin/lsharpc examples/simple.ls` to compile the simple L# source code
+1. Run `bin/lsc examples/simple.ls` to compile the simple L# source code into a bytecode program file
+1. Run `bin/lsr program.lbc` to run the bytecode file
 
 ## Architecture
 The compiler will read the L# file, tokenize the source code, then break the tokens into an abstract syntax tree.
