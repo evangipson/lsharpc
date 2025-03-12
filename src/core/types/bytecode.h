@@ -29,6 +29,10 @@ typedef enum op_code
     OP_HALT,
     OP_PRINT,
     OP_GRAB,
+    OP_BUILTIN_ERROR,
+    OP_BUILTIN_WARNING,
+    OP_BUILTIN_DEBUG,
+    OP_BUILTIN_INFO
 } op_code;
 
 /// @enum value_type

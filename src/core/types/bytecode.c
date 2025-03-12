@@ -26,6 +26,10 @@ const char* get_op_code_name(op_code opcode)
         case OP_HALT: return "OP_HALT";
         case OP_PRINT: return "OP_PRINT";
         case OP_GRAB: return "OP_GRAB";
+        case OP_BUILTIN_ERROR: return "OP_BUILTIN_ERROR";
+        case OP_BUILTIN_WARNING: return "OP_BUILTIN_WARNING";
+        case OP_BUILTIN_DEBUG: return "OP_BUILTIN_DEBUG";
+        case OP_BUILTIN_INFO: return "OP_BUILTIN_INFO";
         default: return "UNKNOWN OP CODE";
     }
 }

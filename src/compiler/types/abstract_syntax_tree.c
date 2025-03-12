@@ -5,7 +5,7 @@ static abstract_syntax_node* create_new_node(abstract_syntax_node_type type)
     abstract_syntax_node* node = (abstract_syntax_node*)safe_malloc(sizeof(abstract_syntax_node));
     if (node == NULL)
     {
-        log_error("[create_new_node]: unable to allocate memory for abstract syntax node.");
+        log_error("Compiler error: Unable to allocate memory for abstract syntax node.");
         return NULL;
     }
 

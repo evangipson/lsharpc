@@ -5,7 +5,7 @@ void* safe_malloc(size_t size)
     void* ptr = malloc(size);
     if (ptr == NULL)
     {
-        log_error("[safe_malloc]: Memory allocation failed (size: %zu bytes)", size);
+        log_error("Core error: Memory allocation failed (size: %zu bytes).", size);
         exit(-1);
     }
 
@@ -16,7 +16,7 @@ void safe_free(void* ptr)
 {
     if (ptr == NULL)
     {
-        log_error("[safe_free]: provided pointer was already null");
+        log_error("Core error: Provided pointer was already null.");
         return;
     }
 
@@ -27,7 +27,7 @@ void safe_free_collection(void** collection)
 {
     if (collection == NULL)
     {
-        log_error("[safe_free_collection]: provided collection was null");
+        log_error("Core error: Provided collection was null.");
         return;
     }
 

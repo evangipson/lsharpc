@@ -613,8 +613,6 @@ static abstract_syntax_node* parse_program()
     abstract_syntax_node* program_node = create_ast_node_program(NULL, 0, 50);
     program_node->data.program_node.statements = (abstract_syntax_node**)safe_malloc(program_node->data.program_node.statement_capacity * sizeof(abstract_syntax_node*));
 
-    log_debug("[parse_program]: starting the parser");
-
     while (peek_token() != NULL && peek_token()->type != TOKEN_END_OF_FILE)
     {
         abstract_syntax_node* statement_node = parse_statement();
@@ -639,8 +637,6 @@ static abstract_syntax_node* parse_program()
             consume_token();
         }
     }
-
-    log_debug("[parse_program]: program node created, statement_count = %d", program_node->data.program_node.statement_count);
 
     return program_node;
 }

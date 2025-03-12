@@ -52,7 +52,7 @@ static char* get_identifier(char* source, int* position)
     char* identifier = (char*)safe_malloc((length + 1) * sizeof(char));
     if (identifier == NULL)
     {
-        log_error("[get_identifier]: failed to get identifier, could not allocate %zu bytes of memory", (length + 1) * sizeof(char));
+        log_error("Compiler error: Failed to get identifier, could not allocate %zu bytes of memory.", (length + 1) * sizeof(char));
         return NULL;
     }
 
@@ -60,7 +60,7 @@ static char* get_identifier(char* source, int* position)
     memcpy(identifier, &source[start_pos], length);
     if(identifier == NULL)
     {
-        log_error("[get_identifier]: failed to create identifier from source");
+        log_error("Compiler error: Failed to create identifier from source.");
         return NULL;
     }
     identifier[length] = '\0';
@@ -85,7 +85,7 @@ static char* get_string_literal(char* source, int* position)
     /* guard against unterminated string literal */
     if (source[*position] != '\'')
     {
-        log_error("[get_string_literal]: could not create string literal, unterminated string");
+        log_error("Compiler error: Could not create string literal, unterminated string.");
         return NULL;
     }
 
@@ -93,7 +93,7 @@ static char* get_string_literal(char* source, int* position)
     char* string = (char*)malloc((length + 1) * sizeof(char));
     if (string == NULL)
     {
-        log_error("[get_string_literal]: failed to get string literal, could not allocate %zu bytes of memory", (length + 1) * sizeof(char));
+        log_error("Compiler error: Failed to get string literal, could not allocate %zu bytes of memory.", (length + 1) * sizeof(char));
         return NULL;
     }
 
@@ -101,7 +101,7 @@ static char* get_string_literal(char* source, int* position)
     memcpy(string, &source[start_pos], length);
     if(string == NULL)
     {
-        log_error("[get_string_literal]: failed to create string literal from source");
+        log_error("Compiler error: Failed to create string literal from source.");
         return NULL;
     }
     string[length] = '\0';
@@ -350,7 +350,7 @@ token** get_tokens(char* source, size_t* token_count)
     tokens = (token**)malloc(tokens_capacity * sizeof(token*));
     if (tokens == NULL)
     {
-        log_error("[get_tokens]: failed to allocate memory for tokens");
+        log_error("Compiler error: Failed to allocate memory for tokens.");
         *token_count = token_amount;
         return NULL;
     }
@@ -372,7 +372,7 @@ token** get_tokens(char* source, size_t* token_count)
         token** temp_tokens = (token**)realloc(tokens, tokens_capacity * sizeof(token*));
         if (temp_tokens == NULL)
         {
-            log_error("[get_tokens]: failed to reallocate memory for tokens");
+            log_error("Compiler error: Failed to reallocate memory for tokens.");
             free_tokens(tokens);
             *token_count = token_amount;
             return NULL;

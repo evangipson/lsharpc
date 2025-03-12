@@ -10,7 +10,7 @@ char* duplicate_string(const char* source)
     // Check for null terminator (basic check)
     if (strchr(source, '\0') == NULL)
     {
-        log_error("[duplicate_string]: input string is not null-terminated.");
+        log_error("Core error: Input string is not null-terminated.");
         return NULL;
     }
 
@@ -21,7 +21,7 @@ char* duplicate_string(const char* source)
     char* destination = (char*)safe_malloc(length + 1);
     if (destination == NULL)
     {
-        log_error("[duplicate_string]: could not allocate memory for destination string.");
+        log_error("Core error: Could not allocate memory for destination string.");
         return NULL;
     }
 

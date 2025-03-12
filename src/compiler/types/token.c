@@ -56,7 +56,7 @@ token* create_token(token_type type, char* value, int line, int column)
     /* if any expected properties haven't been properly allocated, free the memory and return NULL */
     if (new_token->value == NULL && value != NULL)
     {
-        log_error("[free_token]: failed to create token, value was not correctly set");
+        log_error("Compiler error: Failed to create token, value was not correctly set.");
         free_token(new_token);
         return NULL;
     }
@@ -68,7 +68,7 @@ bool free_token(token* token)
 {
     if (token == NULL)
     {
-        log_error("[free_token]: attempted to free an already null token");
+        log_error("Compiler error: Attempted to free an already null token.");
         return false;
     }
 
@@ -81,7 +81,7 @@ bool free_tokens(token** tokens)
 {
     if (tokens == NULL)
     {
-        log_error("[free_token]: attempted to free an already null collection of tokens");
+        log_error("Compiler error: Attempted to free an already null collection of tokens.");
         return false;
     }
 

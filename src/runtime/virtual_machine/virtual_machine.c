@@ -52,7 +52,7 @@ bool load_bytecode_from_file(virtual_machine* vm, const char* filename)
     FILE* file = fopen(filename, "rb");
     if (file == NULL)
     {
-        log_error("[read_bytecode_from_file]: error opening \"%s\" bytecode file for reading", filename);
+        log_error("Runtime error: Cannot open \"%s\" bytecode file for reading.", filename);
         return false;
     }
 
@@ -66,7 +66,7 @@ bool load_bytecode_from_file(virtual_machine* vm, const char* filename)
     vm->objects = (char**)safe_malloc(object_count * sizeof(char*));
     if (vm->objects == NULL)
     {
-        log_error("[read_bytecode_from_file]: error allocating memory for objects");
+        log_error("Runtime error: Error allocating memory for objects.");
         fclose(file);
         safe_free(vm);
         return NULL;
@@ -80,7 +80,7 @@ bool load_bytecode_from_file(virtual_machine* vm, const char* filename)
         vm->objects[i] = (char*)malloc((string_length + 1) * sizeof(char));
         if (vm->objects[i] == NULL)
         {
-            log_error("[read_bytecode_from_file]: error allocating memory for object");
+            log_error("Runtime error: Error allocating memory for object.");
             fclose(file);
             safe_free(vm);
             return NULL;
@@ -100,7 +100,7 @@ bool load_bytecode_from_file(virtual_machine* vm, const char* filename)
     vm->instructions = (instruction*)safe_malloc(instruction_count * sizeof(instruction));
     if (vm->instructions == NULL)
     {
-        log_error("[read_bytecode_from_file]: error allocating memory for instructions");
+        log_error("Runtime error: Error allocating memory for instructions.");
         fclose(file);
         safe_free(vm);
         return NULL;
@@ -110,7 +110,6 @@ bool load_bytecode_from_file(virtual_machine* vm, const char* filename)
     {
 
         fread(&vm->instructions[i].op_code, sizeof(op_code), 1, file);
-        log_debug("[read_bytecode_from_file]: read an op code: %s", get_op_code_name(vm->instructions[i].op_code));
 
         size_t size_of_operand = 0;
         fread(&size_of_operand, sizeof(size_t), 1, file);
@@ -141,28 +140,24 @@ bool run_vm(virtual_machine* vm)
                     case OP_TYPE_INDEX:
                     case OP_TYPE_TEXT:
                     {
-                        log_debug("[run_vm]: OP_LOAD_CONST operand.i is %d (string index)", instruction.operand.i);
                         new_value.type = VAL_STRING;
                         new_value.as.i = instruction.operand.i;
                         break;
                     }
                     case OP_TYPE_NUMBER:
                     {
-                        log_debug("[run_vm]: OP_LOAD_CONST operand.d is %f", instruction.operand.d);
                         new_value.type = VAL_DOUBLE;
                         new_value.as.d = instruction.operand.d;
-                        log_debug("[run_vm]: set number literal value to %f", new_value.as.d);
                         break;
                     }
                     case OP_TYPE_BIT:
                     {
-                        log_debug("[run_vm]: OP_LOAD_CONST operand.b is \"%s\"", instruction.operand.b ? "true" : "false");
                         new_value.type = VAL_BOOL;
                         new_value.as.b = instruction.operand.b;
                     }
                     default:
                     {
-                        log_warning("[run_vm]: OP_LOAD_CONST operand didn't have a value for d, i, b, or s");
+                        log_error("Runtime error: Error determining operation.");
                         new_value.type = VAL_NULL;
                     }
                 }
@@ -177,10 +172,7 @@ bool run_vm(virtual_machine* vm)
             }
             case OP_STORE_VAR:
             {
-                log_debug("[run_vm]: got OP_STORE_VAR");
-                log_debug("[run_vm]: variable_index=%d, stack_pointer=%d", instruction.operand.variable.variable_index, vm->stack_pointer);
                 vm->variables[instruction.operand.variable.variable_index] = vm->stack[--vm->stack_pointer];
-                log_debug("[run_vm]: stored variable at index %d in vm variables collection", instruction.operand.variable.variable_index);
                 break;
             }
             case OP_POP:
@@ -334,7 +326,6 @@ bool run_vm(virtual_machine* vm)
             case OP_HALT:
             {
                 /* stop execution */
-                log_debug("[run_vm]: got OP_HALT, program execution complete");
                 return true;
             }
             case OP_PRINT:
@@ -346,10 +337,8 @@ bool run_vm(virtual_machine* vm)
                 }
                 else if (value.type == VAL_STRING)
                 {
-                    log_debug("[run_vm]: finding string at index %d from objects", value.as.i);
                     /* retrieve string from objects array using the index */
                     char* string_to_print = (char*)vm->objects[value.as.i];
-                    log_debug("[run_vm]: printing string %s", string_to_print);
                     printf("%s\n", string_to_print);
                 }
                 else if (value.type == VAL_BOOL)
@@ -368,9 +357,37 @@ bool run_vm(virtual_machine* vm)
 
                 break;
             }
+            case OP_BUILTIN_ERROR:
+            {
+                value log_value = vm->stack[--vm->stack_pointer];
+                char* log_message = vm->objects[log_value.as.i];
+                log_error(log_message);
+                break;
+            }
+            case OP_BUILTIN_WARNING:
+            {
+                value log_value = vm->stack[--vm->stack_pointer];
+                char* log_message = vm->objects[log_value.as.i];
+                log_warning(log_message);
+                break;
+            }
+            case OP_BUILTIN_DEBUG:
+            {
+                value log_value = vm->stack[--vm->stack_pointer];
+                char* log_message = vm->objects[log_value.as.i];
+                log_debug(log_message);
+                break;
+            }
+            case OP_BUILTIN_INFO:
+            {
+                value log_value = vm->stack[--vm->stack_pointer];
+                char* log_message = vm->objects[log_value.as.i];
+                log_info(log_message);
+                break;
+            }
             default:
             {
-                log_error("Error: Unknown opcode %d.", instruction.op_code);
+                log_error("Runtime error: Unknown operation %d.", instruction.op_code);
                 return false;
             }
         }

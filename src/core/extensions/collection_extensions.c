@@ -31,14 +31,14 @@ void** copy_collection(void** source_collection, copy_function callback)
     /* safeguard against null collection */
     if (source_collection == NULL)
     {
-        log_error("[copy_collection]: unable to copy collection, source collection was null");
+        log_error("Core error: Unable to copy collection, source collection was null.");
         return NULL;
     }
 
     /* safeguard against null callback function */
     if (callback == NULL)
     {
-        log_error("[copy_collection]: unable to copy collection, callback copy function was null");
+        log_error("Core error: Unable to copy collection, callback copy function was null.");
         return NULL;
     }
 
@@ -64,7 +64,7 @@ void** copy_collection(void** source_collection, copy_function callback)
             }
             safe_free(destination_collection);
 
-            log_error("[copy_collection]: unable to copy collection, problem with element %zu", i + 1);
+            log_error("Core error: Unable to copy collection, problem with element %zu.", i + 1);
             return NULL;
         }
     }
