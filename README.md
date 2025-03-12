@@ -11,33 +11,21 @@ If you're curious, you can read more about it in the [L# language spec](spec) in
 
 ## Syntax
 
-Here is a sample of some [simple L# source code](./examples/simple.ls):
+Here is a sample of some [simple L# source code](./examples/simple-print.ls):
 
 ```lsharp
-/* grab the io library for it's logging functions */
-grab io
+number temperature = 98.5 + 1
 
-/* A normal logging function */
-io.log('A normal call to io.log from L#.')
-
-/* Full suite of named log functions */
-io.debug('A normal call to io.debug from L#.')
-io.information('A normal call to io.information from L#.')
-io.warning('A normal call to io.warning from L#.')
-io.error('A normal call to io.error from L#.')
-
-/* Full suite of log functions with severity specified */
-io.log('A call to io.log with "debug" severity from L#.', 1)
-io.log('A call to io.log with "information" severity from L#.', 2)
-io.log('A call to io.log with "warning" severity from L#.', 3)
-io.log('A call to io.log with "error" severity from L#.', 4)
-
-/* declaring and assiging the number type */
-number temperature = 98.4
-
-/* logging the number that was assigned */
-io.information('Temperature set: `temperature`')
+/* the info, debug, warning, and error functions are built-in to L# */
+info('temperature variable set!')
+debug('temperature is 99.5.')
+warning('temperature cannot be changed.')
+error('done running.')
 ```
+
+When compiling and running this file, the output will look like this:
+
+![A screenshot of console output of a simple L# program.](assets/simple-lsharp-output.png)
 
 ## Getting Started
 1. Clone or fork the repo
