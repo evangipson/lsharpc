@@ -551,7 +551,7 @@ static abstract_syntax_node* parse_grab_statement()
         /* consume the identifier token */
         consume_token();
 
-        return create_ast_node_grab_statement(identifier);
+        return create_ast_node_grab_statement(identifier->data.identifier_node.identifier_name);
     }
 
     /* handle error: expected grab to have an identifier */

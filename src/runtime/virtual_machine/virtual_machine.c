@@ -108,17 +108,15 @@ bool load_bytecode_from_file(virtual_machine* vm, const char* filename)
 
     for (int i = 0; i < instruction_count; i++)
     {
+
         fread(&vm->instructions[i].op_code, sizeof(op_code), 1, file);
         log_debug("[read_bytecode_from_file]: read an op code: %s", get_op_code_name(vm->instructions[i].op_code));
 
         size_t size_of_operand = 0;
         fread(&size_of_operand, sizeof(size_t), 1, file);
-        log_debug("[read_bytecode_from_file]: read size of operand: %zu", size_of_operand);
-
         fread(&vm->instructions[i].operand, size_of_operand, 1, file);
 
         fread(&vm->instructions[i].op_type, sizeof(op_type), 1, file);
-        log_debug("[read_bytecode_from_file]: read an op type: %s", get_op_type_name(vm->instructions[i].op_type));
     }
 
     fclose(file);
@@ -136,8 +134,6 @@ bool run_vm(virtual_machine* vm)
         {
             case OP_LOAD_CONST:
             {
-                log_debug("[run_vm]: vm->object_count is %d", vm->object_count);
-
                 value new_value;
                 /* determine the type of the constant and load it */
                 switch (instruction.op_type)
@@ -152,9 +148,10 @@ bool run_vm(virtual_machine* vm)
                     }
                     case OP_TYPE_NUMBER:
                     {
-                        log_debug("[run_vm]: OP_LOAD_CONST operand.d is %d", instruction.operand.d);
+                        log_debug("[run_vm]: OP_LOAD_CONST operand.d is %f", instruction.operand.d);
                         new_value.type = VAL_DOUBLE;
                         new_value.as.d = instruction.operand.d;
+                        log_debug("[run_vm]: set number literal value to %f", new_value.as.d);
                         break;
                     }
                     case OP_TYPE_BIT:
@@ -180,7 +177,10 @@ bool run_vm(virtual_machine* vm)
             }
             case OP_STORE_VAR:
             {
+                log_debug("[run_vm]: got OP_STORE_VAR");
+                log_debug("[run_vm]: variable_index=%d, stack_pointer=%d", instruction.operand.variable.variable_index, vm->stack_pointer);
                 vm->variables[instruction.operand.variable.variable_index] = vm->stack[--vm->stack_pointer];
+                log_debug("[run_vm]: stored variable at index %d in vm variables collection", instruction.operand.variable.variable_index);
                 break;
             }
             case OP_POP:
@@ -334,6 +334,7 @@ bool run_vm(virtual_machine* vm)
             case OP_HALT:
             {
                 /* stop execution */
+                log_debug("[run_vm]: got OP_HALT, program execution complete");
                 return true;
             }
             case OP_PRINT:
@@ -355,6 +356,16 @@ bool run_vm(virtual_machine* vm)
                 {
                     printf("%s\n", value.as.b ? "true" : "false");
                 }
+                break;
+            }
+            case OP_GRAB:
+            {
+                int module_name_index = instruction.operand.i;
+                char* module_name = vm->objects[module_name_index];
+                log_debug("[run_vm]: OP_GRAB operand.i is %d (string index)", module_name_index);
+
+                log_debug("[run_vm]: grabbing moudule: %s", module_name);
+
                 break;
             }
             default:

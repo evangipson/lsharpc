@@ -28,6 +28,7 @@ typedef enum op_code
     OP_RETURN,
     OP_HALT,
     OP_PRINT,
+    OP_GRAB,
 } op_code;
 
 /// @enum value_type
@@ -57,6 +58,10 @@ typedef enum op_type
 /// @brief A value in the L# virtual machine.
 typedef struct value value;
 
+/// @struct variable_info
+/// @brief A variable in the L# virtual machine.
+typedef struct variable_info variable_info;
+
 /// @struct instruction
 /// @brief An instruction structure for L# bytecode.
 typedef struct instruction instruction;
@@ -71,6 +76,12 @@ struct value
         char* s;
         uint8_t b;
     } as;
+};
+
+struct variable_info
+{
+    int variable_index;
+    symbol_type variable_type;
 };
 
 struct instruction
@@ -100,11 +111,7 @@ struct instruction
             int32_t function_index;
         } call;
 
-        struct
-        {
-            int32_t variable_index;
-            symbol_type variable_type;
-        } variable;
+        struct variable_info variable;
     } operand;
 
     /// @brief The type of operand for this instruction.

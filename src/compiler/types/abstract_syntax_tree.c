@@ -117,8 +117,7 @@ void print_ast_node(abstract_syntax_node* node, int indent)
             }
             break;
         case AST_NODE_GRAB_STATEMENT:
-            printf("\n");
-            print_ast_node(node->data.grab_statement_node.identifier, indent + 1);
+            printf(", Module Name: %s\n", node->data.grab_statement_node.module_name);
             break;
         case AST_NODE_ERROR:
             printf(", Error: %s\n", node->data.error_node.message);
@@ -358,11 +357,11 @@ abstract_syntax_node* create_ast_node_template_string(abstract_syntax_node** par
     return node;
 }
 
-abstract_syntax_node* create_ast_node_grab_statement(abstract_syntax_node* identifier)
+abstract_syntax_node* create_ast_node_grab_statement(char* module_name)
 {
     abstract_syntax_node* node = create_new_node(AST_NODE_GRAB_STATEMENT);
 
-    node->data.grab_statement_node.identifier = identifier;
+    node->data.grab_statement_node.module_name = module_name;
 
     return node;
 }

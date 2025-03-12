@@ -25,6 +25,7 @@ const char* get_op_code_name(op_code opcode)
         case OP_RETURN: return "OP_RETURN";
         case OP_HALT: return "OP_HALT";
         case OP_PRINT: return "OP_PRINT";
+        case OP_GRAB: return "OP_GRAB";
         default: return "UNKNOWN OP CODE";
     }
 }

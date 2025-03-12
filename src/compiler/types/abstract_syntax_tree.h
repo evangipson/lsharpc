@@ -140,7 +140,7 @@ struct abstract_syntax_node
 
         struct
         {
-            struct abstract_syntax_node* identifier;
+            char* module_name;
         } grab_statement_node;
 
         struct
@@ -256,9 +256,9 @@ abstract_syntax_node* create_ast_node_return_statement(abstract_syntax_node* exp
 abstract_syntax_node* create_ast_node_template_string(abstract_syntax_node** parts, int part_count, int part_capacity);
 
 /// @brief Creates an `AST_NODE_GRAB_STATEMENT` abstract syntax node.
-/// @param identifier The name of the module being grabbed.
+/// @param module_name The name of the module being grabbed.
 /// @return A grab statement abstract syntax node, or `NULL` if creation failed.
-abstract_syntax_node* create_ast_node_grab_statement(abstract_syntax_node* identifier);
+abstract_syntax_node* create_ast_node_grab_statement(char* module_name);
 
 /// @brief Creates an `AST_NODE_ERROR` abstract syntax node.
 /// @param message The error message.

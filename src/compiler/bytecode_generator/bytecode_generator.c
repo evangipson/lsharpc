@@ -1,5 +1,13 @@
 #include "bytecode_generator.h"
 
+static int increment_object_count(bytecode_generator* generator)
+{
+    generator->object_count++;
+
+    log_debug("[generate_bytecode]: generator->object_count has been incremented to %d", generator->object_count);
+    return generator->object_count;
+}
+
 bytecode_generator* create_bytecode_generator()
 {
     bytecode_generator* generator = (bytecode_generator*)safe_malloc(sizeof(bytecode_generator));
@@ -22,6 +30,36 @@ void emit_instruction(bytecode_generator* generator, instruction new_instruction
     }
 
     generator->instructions[generator->instruction_count++] = new_instruction;
+}
+
+int add_object(bytecode_generator* generator, char* object)
+{
+    /* resize the objects array if it's full */
+    if (generator->object_count >= generator->object_capacity)
+    {
+        generator->object_capacity = (generator->object_capacity == 0) ? 8 : generator->object_capacity * 2;
+        generator->objects = (char**)realloc(generator->objects, generator->object_capacity * sizeof(char*));
+        if (generator->objects == NULL)
+        {
+            log_error("[add_object]: failed to reallocate objects array");
+            return -1;
+        }
+    }
+
+    /* copy the object (string) */
+    char* copy_of_object = duplicate_string(object);
+    if(copy_of_object == NULL)
+    {
+        log_error("[add_object]: failed to duplicate string object to add");
+        return -1;
+    }
+
+    /* assign the duplicate to the object array at the previous index */
+    log_debug("[add_object]: adding \"%s\" string to objects", copy_of_object);
+    generator->objects[generator->object_count] = copy_of_object;
+
+    /* return the index of the object */
+    return generator->object_count;
 }
 
 void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node)
@@ -77,20 +115,29 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
         case AST_NODE_NUMBER_LITERAL:
         {
             log_debug("[generate_bytecode]: found number literal, adding it to bytecode objects");
-            emit_instruction(generator, (instruction){OP_LOAD_CONST, {.d = node->data.number_literal.value}, OP_TYPE_NUMBER});
+            instruction* inst = (instruction*)safe_malloc(sizeof(instruction));
+            if(inst == NULL)
+            {
+                log_error("[generate_bytecode]: unable to allocate memory for number literal instruction");
+                safe_free(inst);
+                break;
+            }
+            inst->op_code = OP_LOAD_CONST;
+            inst->op_type = OP_TYPE_NUMBER;
+            inst->operand.d = node->data.number_literal.value;
+
+            emit_instruction(generator, *inst);
             break;
         }
         case AST_NODE_STRING_LITERAL:
         {
-            log_debug("[generate_bytecode]: found string literal, adding it to bytecode objects");
-            generator->objects = (char**)realloc(generator->objects, (generator->object_count + 1) * sizeof(char*));
-            if(generator->objects == NULL)
+            /* add the string to the objects in bytecode (to avoid duplication) */
+            int string_index = add_object(generator, node->data.string_literal.value);
+            if (string_index == -1)
             {
-                log_error("[generate_bytecode]: unable to allocate memory for generator->objects");
+                log_error("[generate_bytecode]: unable to allocate memory for string literal");
                 break;
             }
-            generator->objects[generator->object_count] = duplicate_string(node->data.string_literal.value);
-            log_debug("[generate_bytecode]: generator->objects[generator->object_count] is %s", (char*)generator->objects[generator->object_count]);
 
             /* store the index to the string object, not the string itself */
             log_debug("[generate_bytecode]: emitting OP_LOAD_CONST string index %d", generator->object_count);
@@ -101,13 +148,13 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
                 safe_free(inst);
                 break;
             }
+
             inst->op_code = OP_LOAD_CONST;
             inst->op_type = OP_TYPE_TEXT;
             inst->operand.i = generator->object_count;
             emit_instruction(generator, *inst);
 
-            generator->object_count++;
-            log_debug("[generate_bytecode]: generator->object_count has been incremented to %d", generator->object_count);
+            increment_object_count(generator);
 
             break;
         }
@@ -173,7 +220,8 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
             generate_bytecode(generator, node->data.declaration_node.expression);
 
             /* emit OP_STORE_VAR with the variable's index and type. */
-            instruction store_var_instr = {OP_STORE_VAR, {.variable = {variable_index, variable_type}}, OP_TYPE_VARIABLE};
+            variable_info variable = { variable_index, variable_type };
+            instruction store_var_instr = {OP_STORE_VAR, {.variable = variable}, OP_TYPE_VARIABLE};
             emit_instruction(generator, store_var_instr);
 
             break;
@@ -194,9 +242,29 @@ void generate_bytecode(bytecode_generator* generator, abstract_syntax_node* node
         }
         case AST_NODE_GRAB_STATEMENT:
         {
-            /**
-             * TODO: implement grab statement
-             */
+            if (add_object(generator, node->data.grab_statement_node.module_name) == -1)
+            {
+                log_error("[generate_bytecode]: unable to allocate memory for grab statement");
+                break;
+            }
+
+            instruction* inst = (instruction*)safe_malloc(sizeof(instruction));
+            if (inst == NULL)
+            {
+                log_error("[generate_bytecode]: unable to allocate memory for grab instruction");
+                safe_free(inst);
+                break;
+            }
+
+            inst->op_code = OP_GRAB;
+            inst->op_type = OP_TYPE_TEXT;
+            inst->operand.i = generator->object_count;
+
+            log_debug("[generate_bytecode]: emitting OP_GRAB with module name at string index %d", generator->object_count);
+            emit_instruction(generator, *inst);
+
+            increment_object_count(generator);
+
             break;
         }
         case AST_NODE_ERROR:
@@ -226,8 +294,10 @@ instruction* compile_ast_to_bytecode(abstract_syntax_node* ast, int* instruction
     return instructions;
 }
 
-void write_bytecode_to_file(instruction* instructions, int instruction_count, char** objects, int object_count, const char* filename)
+void write_bytecode_to_file(instruction* instructions, int instruction_count,char** objects, int object_count, const char* filename)
 {
+    log_debug("[write_bytecode_to_file]: opening \"%s\" file for writing", filename);
+
     /* open the file in binary write mode */
     FILE* file = fopen(filename, "wb");
     if (file == NULL)
@@ -236,10 +306,12 @@ void write_bytecode_to_file(instruction* instructions, int instruction_count, ch
         return;
     }
 
-    // Write object_count
+    /* write object_count */
+    log_debug("[write_bytecode_to_file]: writing object count to bytecode file", filename);
     fwrite(&object_count, sizeof(int), 1, file);
 
-    // Write objects
+    /* write objects */
+    log_debug("[write_bytecode_to_file]: writing objects to bytecode file", filename);
     for (int i = 0; i < object_count; i++)
     {
         int string_length = strlen(objects[i]);
@@ -248,9 +320,11 @@ void write_bytecode_to_file(instruction* instructions, int instruction_count, ch
     }
 
     /* write instruction count */
+    log_debug("[write_bytecode_to_file]: writing instruction count to bytecode file", filename);
     fwrite(&instruction_count, sizeof(int), 1, file);
 
     /* write instructions */
+    log_debug("[write_bytecode_to_file]: writing instructions to bytecode file", filename);
     for (int i = 0; i < instruction_count; i++)
     {
         fwrite(&instructions[i].op_code, sizeof(op_code), 1, file);
@@ -264,6 +338,7 @@ void write_bytecode_to_file(instruction* instructions, int instruction_count, ch
         fwrite(&instructions[i].op_type, sizeof(op_type), 1, file);
     }
 
+    log_debug("[write_bytecode_to_file]: done writing \"%s\" bytecode file, closing", filename);
     fclose(file);
 }
 
