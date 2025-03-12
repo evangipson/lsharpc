@@ -20,7 +20,6 @@ int main(int argc, const char* argv[])
         log_error("Runtime error: Failed to run \"%s\" bytecode.", argv[1]);
         return 1;
     }
-    log_info("L#: Done running file.", argv[1]);
 
     safe_free(&vm);
 
